@@ -23,3 +23,5 @@ def b():
     print a()
 
 b()
+
+print 'foo'
