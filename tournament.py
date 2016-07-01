@@ -17,34 +17,49 @@ def connect():
 
 def db_commit_for_add(query, data):
     DB = connect()
-    c = DB.cursor()
-    c.execute(query, data)
+    cur = DB.cursor()
+    cur.execute(query, data)
     DB.commit()
     DB.close()
 
 
-def db_commit1_for_get(query):
+def db_commit1_for_run(query):
     DB = connect()
-    c = DB.cursor()
-    c.execute(query)
+    cur = DB.cursor()
+    cur.execute(query)
     DB.commit()
     DB.close()
 
 
 def deleteMatches():
     """Remove all the match records from the database."""
+    query = "delete from matches"
+    db_commit1_for_run(query)
+
+# deleteMatches()
 
 
 def deletePlayers():
     """Remove all the player records from the database."""
     query = "delete from players"
-    db_commit1_for_get(query)
+    db_commit1_for_run(query)
 
-deletePlayers()
+# deletePlayers()
 
 
 def countPlayers():
     """Returns the number of players currently registered."""
+    players_container = 0
+    DB = connect()
+    cur = DB.cursor()
+    query = "select count(*) from players"
+    cur.execute(query)
+    players_container = cur.fetchone()
+    DB.commit()
+    DB.close()
+    return players[0]
+
+# print countPlayers()
 
 
 def registerPlayer(name):
@@ -60,7 +75,7 @@ def registerPlayer(name):
     data = (bleach.clean(name),)
     db_commit_for_add(query, data)
 
-# registerPlayer('jeniffer kim')
+# registerPlayer('Jeniffer Kim')
 
 
 def playerStandings():
