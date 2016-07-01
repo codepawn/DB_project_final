@@ -12,3 +12,14 @@ def commit(name):
     print(name)
 
 commit('foo')
+
+
+def a():
+    a = "a"
+    return a
+
+
+def b():
+    print a()
+
+b()
