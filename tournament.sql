@@ -6,9 +6,21 @@
 -- You can write comments in this file by starting them with two dashes, like
 -- these lines here.
 
+DROP TABLE IF EXISTS players CASCADE;
+
+
+DROP TABLE IF EXISTS matches CASCADE;
+
+
+CREATE DATABASE tournament;
+
+\c tournament;
+
+
 CREATE TABLE players(id serial UNIQUE PRIMARY KEY,
-                                              name text);
+                                              name varchar(30));
 
 
-CREATE TABLE matches(id serial REFERENCES players,
-                                         win_lose serial);
+CREATE TABLE matches(matche_id serial UNIQUE PRIMARY KEY,
+                                                     winner serial REFERENCES players(id),
+                                                                              loser serial REFERENCES players(id));

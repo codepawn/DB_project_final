@@ -11,7 +11,6 @@ import bleach
 
 def connect():
     """Connect to the PostgreSQL database.  Returns a database connection."""
-    print ("Connecting successful")
     return psycopg2.connect("dbname=tournament")
 
 
@@ -36,15 +35,11 @@ def deleteMatches():
     query = "delete from matches"
     db_commit1_for_run(query)
 
-# deleteMatches()
-
 
 def deletePlayers():
     """Remove all the player records from the database."""
     query = "delete from players"
     db_commit1_for_run(query)
-
-# deletePlayers()
 
 
 def countPlayers():
@@ -58,8 +53,6 @@ def countPlayers():
     DB.commit()
     DB.close()
     return players[0]
-
-# print countPlayers()
 
 
 def registerPlayer(name):
@@ -75,8 +68,6 @@ def registerPlayer(name):
     data = (bleach.clean(name),)
     db_commit_for_add(query, data)
 
-# registerPlayer('Jeniffer Kim')
-
 
 def playerStandings():
     """Returns a list of the players and their win records, sorted by wins.
@@ -91,6 +82,20 @@ def playerStandings():
         wins: the number of matches the player has won
         matches: the number of matches the player has played
     """
+    players = ()
+    DB = connect()
+    cur = DB.cursor()
+    query = """
+    select players.id, players.name, matches.winner, matches.loser
+    from players left join matches
+    on players.id = matches.id;
+    """
+    cur.execute(query)
+    players = cur.fetchall()
+    print players
+    DB.commit()
+    DB.close()
+    return players
 
 
 def reportMatch(winner, loser):
@@ -100,6 +105,12 @@ def reportMatch(winner, loser):
       winner:  the id number of the player who won
       loser:  the id number of the player who lost
     """
+    DB = connect()
+    cur = DB.cursor()
+    query = "insert into matches values({},{}) ".format(winner, loser)
+    cur.execute(query)
+    DB.commit()
+    DB.close()
 
 
 def swissPairings():
@@ -121,3 +132,9 @@ def swissPairings():
 
 # 1.보안 sql injection 과 bleach(script injection 방어) 추가
 # 2.decorater 추가
+
+if __name__ == "__main__":
+    # deleteMatches()
+    # deletePlayers()
+    # print countPlayers()
+    # registerPlayer('Young Ahn')

@@ -24,4 +24,4 @@ def b():
 
 b()
 
-print 'foo'
+print 'foobar'
