@@ -14,32 +14,24 @@ def connect():
     return psycopg2.connect("dbname=tournament")
 
 
-def db_commit_for_add(query, data):
+def deleteMatches():
+    """Remove all the match records from the database."""
     DB = connect()
     cur = DB.cursor()
-    cur.execute(query, data)
-    DB.commit()
-    DB.close()
-
-
-def db_commit1_for_run(query):
-    DB = connect()
-    cur = DB.cursor()
+    query = "delete from matches"
     cur.execute(query)
     DB.commit()
     DB.close()
 
 
-def deleteMatches():
-    """Remove all the match records from the database."""
-    query = "delete from matches"
-    db_commit1_for_run(query)
-
-
 def deletePlayers():
     """Remove all the player records from the database."""
+    DB = connect()
+    cur = DB.cursor()
     query = "delete from players"
-    db_commit1_for_run(query)
+    cur.execute(query)
+    DB.commit()
+    DB.close()
 
 
 def countPlayers():
@@ -47,12 +39,11 @@ def countPlayers():
     players_container = 0
     DB = connect()
     cur = DB.cursor()
-    query = "select count(*) from players"
+    query = "select count(id) from players"
     cur.execute(query)
     players_container = cur.fetchone()
-    DB.commit()
     DB.close()
-    return players[0]
+    return players_container[0]
 
 
 def registerPlayer(name):
@@ -64,9 +55,13 @@ def registerPlayer(name):
     Args:
       name: the player's full name (need not be unique).
     """
+    DB = connect()
+    cur = DB.cursor()
     query = "insert into players (name) values(%s)"
     data = (bleach.clean(name),)
-    db_commit_for_add(query, data)
+    cur.execute(query, data)
+    DB.commit()
+    DB.close()
 
 
 def playerStandings():
@@ -86,14 +81,13 @@ def playerStandings():
     DB = connect()
     cur = DB.cursor()
     query = """
-    select players.id, players.name, matches.winner, matches.loser
+    select players.id, players.name, view_winner.wins, view_matches.matches
     from players left join matches
+
     on players.id = matches.id;
     """
     cur.execute(query)
     players = cur.fetchall()
-    print players
-    DB.commit()
     DB.close()
     return players
 
@@ -134,7 +128,4 @@ def swissPairings():
 # 2.decorater 추가
 
 if __name__ == "__main__":
-    # deleteMatches()
-    # deletePlayers()
-    # print countPlayers()
-    # registerPlayer('Young Ahn')
+    print "Hello world"
