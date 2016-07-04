@@ -11,40 +11,31 @@ import bleach
 
 def connect():
     """Connect to the PostgreSQL database.  Returns a database connection."""
-    print ("Connecting successful")
     return psycopg2.connect("dbname=tournament")
 
 
-def db_commit_for_add(query, data):
-    DB = connect()
-    cur = DB.cursor()
-    cur.execute(query, data)
-    DB.commit()
-    DB.close()
+def db_commit_decoration(func):
+    def wrapper():
+        DB = connect()
+        cur = DB.cursor()
+        cur.execute(func())
+        DB.commit()
+        DB.close()
+    return wrapper
 
 
-def db_commit1_for_run(query):
-    DB = connect()
-    cur = DB.cursor()
-    cur.execute(query)
-    DB.commit()
-    DB.close()
-
-
+@db_commit_decoration
 def deleteMatches():
     """Remove all the match records from the database."""
     query = "delete from matches"
-    db_commit1_for_run(query)
-
-# deleteMatches()
+    return query
 
 
+@db_commit_decoration
 def deletePlayers():
     """Remove all the player records from the database."""
     query = "delete from players"
-    db_commit1_for_run(query)
-
-# deletePlayers()
+    return query
 
 
 def countPlayers():
@@ -52,14 +43,11 @@ def countPlayers():
     players_container = 0
     DB = connect()
     cur = DB.cursor()
-    query = "select count(*) from players"
+    query = "select count(id) from players"
     cur.execute(query)
     players_container = cur.fetchone()
-    DB.commit()
     DB.close()
-    return players[0]
-
-# print countPlayers()
+    return players_container[0]
 
 
 def registerPlayer(name):
@@ -71,11 +59,13 @@ def registerPlayer(name):
     Args:
       name: the player's full name (need not be unique).
     """
+    DB = connect()
+    cur = DB.cursor()
     query = "insert into players (name) values(%s)"
     data = (bleach.clean(name),)
-    db_commit_for_add(query, data)
-
-# registerPlayer('Jeniffer Kim')
+    cur.execute(query, data)
+    DB.commit()
+    DB.close()
 
 
 def playerStandings():
@@ -91,6 +81,20 @@ def playerStandings():
         wins: the number of matches the player has won
         matches: the number of matches the player has played
     """
+    players = ()
+    DB = connect()
+    cur = DB.cursor()
+    query = """
+    select players.id, players.name, view_wins.winner, view_matches.matches
+    from players left join view_wins on players.id = view_wins.id
+    left join view_matches on players.id = view_matches.id
+    group by players.id, players.name, view_wins.winner, view_matches.matches
+    order by view_wins.winner desc;
+    """
+    cur.execute(query)
+    players = cur.fetchall()
+    DB.close()
+    return players
 
 
 def reportMatch(winner, loser):
@@ -100,6 +104,18 @@ def reportMatch(winner, loser):
       winner:  the id number of the player who won
       loser:  the id number of the player who lost
     """
+    DB = connect()
+    cur = DB.cursor()
+    query = "insert into matches (winner,loser) values({},{}) ".format(
+        winner, loser)
+    cur.execute(query)
+    DB.commit()
+    DB.close()
+
+
+def gruping(list, size=2):
+    size = max(1, size)
+    return [list[i:i + size] for i in range(0, len(list), size)]
 
 
 def swissPairings():
@@ -117,7 +133,22 @@ def swissPairings():
         id2: the second player's unique id
         name2: the second player's name
     """
+    standings = playerStandings()
+    if len(standings) % 2 != 0:
+        raise "Odd number of players"
+    grouped_standings = gruping(standings, 2)
+    matched_pairs = list()
 
+    for stand in grouped_standings:
+        pair = list()
+        for player in stand:
+            pair.append(player[0])
+            pair.append(player[1])
+        matched_pairs.append(pair)
+    return matched_pairs
 
-# 1.보안 sql injection 과 bleach(script injection 방어) 추가
-# 2.decorater 추가
+print playerStandings()
+print swissPairings()
+
+if __name__ == "__main__":
+    print "Hello world"
