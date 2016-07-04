@@ -22,30 +22,24 @@ CREATE TABLE matches(
   winner serial REFERENCES players(id),
   loser serial REFERENCES players(id));
 
-INSERT INTO players (name) VALUES ('Hanjo');
-INSERT INTO players (name) VALUES ('76');
-INSERT INTO players (name) VALUES ('Genzi');
-INSERT INTO players (name) VALUES ('Widow');
-
-INSERT INTO matches (winner,loser) VALUES (1,2);
-INSERT INTO matches (winner,loser) VALUES (2,3);
-INSERT INTO matches (winner,loser) VALUES (4,1);
-INSERT INTO matches (winner,loser) VALUES (4,2);
+-- INSERT INTO players (name) VALUES ('Hanjo');
+-- INSERT INTO players (name) VALUES ('76');
+-- INSERT INTO players (name) VALUES ('Genzi');
+-- INSERT INTO players (name) VALUES ('Widow');
+--
+-- INSERT INTO matches (winner,loser) VALUES (1,2);
+-- INSERT INTO matches (winner,loser) VALUES (2,3);
+-- INSERT INTO matches (winner,loser) VALUES (4,1);
+-- INSERT INTO matches (winner,loser) VALUES (4,1);
 
 CREATE VIEW view_wins AS
-  SELECT players.id, count(matches.winner)
+  SELECT players.id, count(matches.winner) as winner
   FROM players LEFT JOIN matches
   ON players.id = matches.winner
   GROUP BY players.id, matches.winner;
 
-CREATE VIEW view_losees AS
-  SELECT players.id, count(matches.loser)
-  FROM players LEFT JOIN matches
-  ON players.id = matches.loser
-  GROUP BY players.id, matches.loser;
-
 CREATE VIEW view_matches AS
-  SELECT players.id, count(matches)
+  SELECT players.id, count(matches) as matches
   FROM players LEFT JOIN matches
   ON(players.id = matches.winner)
   OR (players.id = matches.loser)

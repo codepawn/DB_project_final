@@ -14,24 +14,28 @@ def connect():
     return psycopg2.connect("dbname=tournament")
 
 
+def db_commit_decoration(func):
+    def wrapper():
+        DB = connect()
+        cur = DB.cursor()
+        cur.execute(func())
+        DB.commit()
+        DB.close()
+    return wrapper
+
+
+@db_commit_decoration
 def deleteMatches():
     """Remove all the match records from the database."""
-    DB = connect()
-    cur = DB.cursor()
     query = "delete from matches"
-    cur.execute(query)
-    DB.commit()
-    DB.close()
+    return query
 
 
+@db_commit_decoration
 def deletePlayers():
     """Remove all the player records from the database."""
-    DB = connect()
-    cur = DB.cursor()
     query = "delete from players"
-    cur.execute(query)
-    DB.commit()
-    DB.close()
+    return query
 
 
 def countPlayers():
@@ -81,10 +85,11 @@ def playerStandings():
     DB = connect()
     cur = DB.cursor()
     query = """
-    select players.id, players.name, view_winner.wins, view_matches.matches
-    from players left join matches
-
-    on players.id = matches.id;
+    select players.id, players.name, view_wins.winner, view_matches.matches
+    from players left join view_wins on players.id = view_wins.id
+    left join view_matches on players.id = view_matches.id
+    group by players.id, players.name, view_wins.winner, view_matches.matches
+    order by view_wins.winner desc;
     """
     cur.execute(query)
     players = cur.fetchall()
@@ -101,10 +106,16 @@ def reportMatch(winner, loser):
     """
     DB = connect()
     cur = DB.cursor()
-    query = "insert into matches values({},{}) ".format(winner, loser)
+    query = "insert into matches (winner,loser) values({},{}) ".format(
+        winner, loser)
     cur.execute(query)
     DB.commit()
     DB.close()
+
+
+def gruping(list, size=2):
+    size = max(1, size)
+    return [list[i:i + size] for i in range(0, len(list), size)]
 
 
 def swissPairings():
@@ -122,10 +133,22 @@ def swissPairings():
         id2: the second player's unique id
         name2: the second player's name
     """
+    standings = playerStandings()
+    if len(standings) % 2 != 0:
+        raise "Odd number of players"
+    grouped_standings = gruping(standings, 2)
+    matched_pairs = list()
 
+    for stand in grouped_standings:
+        pair = list()
+        for player in stand:
+            pair.append(player[0])
+            pair.append(player[1])
+        matched_pairs.append(pair)
+    return matched_pairs
 
-# 1.보안 sql injection 과 bleach(script injection 방어) 추가
-# 2.decorater 추가
+print playerStandings()
+print swissPairings()
 
 if __name__ == "__main__":
     print "Hello world"

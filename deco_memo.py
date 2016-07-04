@@ -1,27 +1,13 @@
-
-def db_commit_decorate(func):
+def decoration(func):
     def wrapper(name):
-        print "A"
+        print "a"
         func(name)
-        print "C"
+        print "c"
     return wrapper
 
 
-@db_commit_decorate
-def commit(name):
-    print(name)
+@decoration
+def foo(name):
+    print name
 
-commit('foo')
-
-
-def a():
-    a = "a"
-    return a
-
-
-def b():
-    print a()
-
-b()
-
-print 'foobar'
+foo('sonite')
