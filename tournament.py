@@ -6,7 +6,6 @@
 
 
 import psycopg2
-import bleach
 
 
 def connect():
@@ -62,7 +61,7 @@ def registerPlayer(name):
     DB = connect()
     cur = DB.cursor()
     query = "insert into players (name) values(%s)"
-    data = (bleach.clean(name),)
+    data = (name,)
     cur.execute(query, data)
     DB.commit()
     DB.close()
@@ -85,11 +84,7 @@ def playerStandings():
     DB = connect()
     cur = DB.cursor()
     query = """
-    select players.id, players.name, view_wins.winner, view_matches.matches
-    from players left join view_wins on players.id = view_wins.id
-    left join view_matches on players.id = view_matches.id
-    group by players.id, players.name, view_wins.winner, view_matches.matches
-    order by view_wins.winner desc;
+        select * from view_standings;
     """
     cur.execute(query)
     players = cur.fetchall()
@@ -106,15 +101,18 @@ def reportMatch(winner, loser):
     """
     DB = connect()
     cur = DB.cursor()
-    query = "insert into matches (winner,loser) values({},{}) ".format(
-        winner, loser)
-    cur.execute(query)
+    query = "insert into matches (winner,loser) values(%s,%s)"
+    data = (winner, loser,)
+    cur.execute(query, data)
     DB.commit()
     DB.close()
 
 
-def gruping(list, size=2):
-    size = max(1, size)
+def gruping(list):
+    """
+    Make the data two group of lists
+    """
+    size = 2
     return [list[i:i + size] for i in range(0, len(list), size)]
 
 
@@ -136,7 +134,7 @@ def swissPairings():
     standings = playerStandings()
     if len(standings) % 2 != 0:
         raise "Odd number of players"
-    grouped_standings = gruping(standings, 2)
+    grouped_standings = gruping(standings)
     matched_pairs = list()
 
     for stand in grouped_standings:
@@ -146,9 +144,6 @@ def swissPairings():
             pair.append(player[1])
         matched_pairs.append(pair)
     return matched_pairs
-
-print playerStandings()
-print swissPairings()
 
 if __name__ == "__main__":
     print "Hello world"
